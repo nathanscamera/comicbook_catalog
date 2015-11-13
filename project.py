@@ -25,8 +25,8 @@ CLIENT_ID = json.loads(
 	open('client_secrets.json', 'r').read())['web']['client_id']
 
 def getUserID(email):
-	"""Checks if user's details are in the databse. If True, the user ID is returned;
-	if not, nothing is returned"""
+	"""Checks if user's details are in the databse. If True, the user ID
+	 is returned; if not, nothing is returned"""
 	try:
 		user = session.query(Users).filter_by(email = email).one()
 		return user.id
@@ -34,8 +34,8 @@ def getUserID(email):
 		return None
 
 def createUser(login_session):
-	"""takes the users google plus information from login_session, stores it in the database,
-	and returns the users id from the databse"""
+	"""takes the users google plus information from login_session, stores 
+	it in the database, and returns the users id from the databse"""
 	newUser = Users(name = login_session['username'], email = login_session['email'], 
 		picture = login_session['picture'])
 	session.add(newUser)
@@ -44,17 +44,28 @@ def createUser(login_session):
 	print user.id
 	return user.id
 
+def login_required(f):
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user is None:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 def home():
 	"""returns home page"""
 	newItems = session.query(Items).order_by(desc(Items.time)).limit(10)
 	categories = session.query(Categories)
-	return render_template('home.html', newItems = newItems, categories = categories, login_session = login_session)
+	return render_template('home.html', newItems = newItems, 
+		categories = categories, 
+		login_session = login_session)
 
 @app.route('/login')
 def login():
-	"""returns the page for signing in to googls plus, and a state key that is unique to
-	every visit to this page."""
+	"""returns the page for signing in to googls plus, and a state key 
+	that is unique to every visit to this page."""
 	#generates a random, 32 character long, string each time someone visits the login page.
 	state = "".join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
 	#stores the random string in to the login_session dictionary. session is a dictionary that 
@@ -63,12 +74,15 @@ def login():
 	login_session['state'] = state
 	return render_template('login.html', STATE = state)
 
+@login_required
+def yourFunction(args):
 @app.route('/categories/id/<int:id>/edit', methods = ['GET', 'POST'])
 def editCategory(id):
-	"""returns the page for editing a category. Only users who created the category can edit it,
-	this is ensured by checking that the user ID in the login_session object mathces the user ID
-	stored with the category in the databse. Items of the category are created, deleted and edited 
-	with forms."""
+	"""returns the page for editing a category. Only users who created
+	the category can edit it, this is ensured by checking that the 
+	user ID in the login_session object mathces the user ID stored
+	 with the category in the databse. Items of the category are 
+	 created, deleted and edited with forms."""
 	app.add_url_rule
 	items = session.query(Items).filter_by(categories_id = id).all()
 	userID = session.query(Categories.userID).filter_by(id = id).one()
@@ -90,7 +104,9 @@ def editCategory(id):
 
 			return redirect(url_for('home'))
 		else: 
-			newItem = Items(name = request.form['name'], description = request.form['description'], categories_id= id)
+			newItem = Items(name = request.form['name'], 
+				description = request.form['description'], 
+				categories_id= id)
 			session.add(newItem)
 			session.commit()
 			return redirect(url_for('home'))
@@ -104,16 +120,19 @@ def editCategory(id):
 
 @app.route('/categories/id/<int:id>')
 def category(id):
-	""" retrieves all items from the databse belonging to the given category, and returns a 
-	page displaying them"""
+	""" retrieves all items from the databse belonging to the given 
+	category, and returns a page displaying them"""
 	items = session.query(Items).filter_by( categories_id = id ).all()
 	categoryName = session.query(Categories.name).filter_by(id = id).one()
 	return render_template("Category.html", items = items, categoryName = categoryName[0])
 
+@login_required
+def yourFunction(args):
 @app.route('/categories/new', methods = ['GET', 'POST'])
 def addCategory():
-	"""returns a page for the user to create a new category if they are signed in. This is 
-	ensured by checking that there is a user_id in the user's login_session"""
+	"""returns a page for the user to create a new category if they 
+	are signed in. This is ensured by checking that there is a user_id
+	in the user's login_session"""
 	try:
 		login_session['user_id']
 		if request.method == 'GET':
@@ -128,6 +147,8 @@ def addCategory():
 	except:
 		return "must be signed in to add a new category"
 
+@login_required
+def yourFunction(args):
 @app.route('/item/id/<int:id>/delete', methods = ['GET','POST'])
 def deleteItem(id):
 	"""Returns a page for the user to confirm that they want to delete the chosen item ."""
@@ -141,12 +162,15 @@ def deleteItem(id):
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
-	"""After the user agrees to allow the application offline access to their google plus information,
-	the user's state key is verified, and an authorization key is sent to the application to be 
-	exchanged for an access token through google's oauth2 api. Once the application has recieved an
-	access token, the gconnect function checks to see if the access token is valid, and goes on to request
-	the user's google plus information and store it in the login_session object. After all this is completed,
-	the user is redirectied to the home page."""
+	"""After the user agrees to allow the application offline access to 
+	their google plus information, the user's state key is verified, and
+	an authorization key is sent to the application to be exchanged for
+	an access token through google's oauth2 api. Once the application 
+	has recieved anaccess token, the gconnect function checks to see 
+	if the access token is valid, and goes on to request the user's
+	google plus information and store it in the login_session object. 
+	After all this is completed, the user is redirectied to the home 
+	page."""
 	print request.args.get('state')
 	if request.args.get('state') != login_session['state']:
 		return "invalid state token"
