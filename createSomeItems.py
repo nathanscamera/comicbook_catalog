@@ -21,7 +21,7 @@ session.add(Superman)
 session.add(Batman)
 session.commit()
 
-Skateboarding = Categories(name = "manga", userID = Nate.id)
+Manga = Categories(name = "manga", userID = Nate.id)
 session.add(Manga)
 session.commit()
 
