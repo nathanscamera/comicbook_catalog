@@ -48,10 +48,12 @@ def login_required(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if g.user is None:
-            return redirect(url_for('login', next=request.url))
-        return f(*args, **kwargs)
-    return decorated_function
+        if g.user in session:
+        	return f(*args, **kwargs)
+        else:
+        	flash("\"You shall not pass!\" - Gandalf")
+            	return redirect(url_for('login', next=request.url))
+    	return decorated_function
 
 @app.route('/')
 def home():
@@ -74,9 +76,8 @@ def login():
 	login_session['state'] = state
 	return render_template('login.html', STATE = state)
 
-@login_required
-def yourFunction(args):
 @app.route('/categories/id/<int:id>/edit', methods = ['GET', 'POST'])
+@login_required
 def editCategory(id):
 	"""returns the page for editing a category. Only users who created
 	the category can edit it, this is ensured by checking that the 
@@ -126,9 +127,8 @@ def category(id):
 	categoryName = session.query(Categories.name).filter_by(id = id).one()
 	return render_template("Category.html", items = items, categoryName = categoryName[0])
 
-@login_required
-def yourFunction(args):
 @app.route('/categories/new', methods = ['GET', 'POST'])
+@login_required
 def addCategory():
 	"""returns a page for the user to create a new category if they 
 	are signed in. This is ensured by checking that there is a user_id
@@ -147,9 +147,8 @@ def addCategory():
 	except:
 		return "must be signed in to add a new category"
 
-@login_required
-def yourFunction(args):
 @app.route('/item/id/<int:id>/delete', methods = ['GET','POST'])
+@login_required
 def deleteItem(id):
 	"""Returns a page for the user to confirm that they want to delete the chosen item ."""
 	ItemToDelete = session.query(Items).filter_by(id = id).one()
