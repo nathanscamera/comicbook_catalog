@@ -50,7 +50,7 @@ def login_required(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if g.user in session:
+        if 'username' in login_session:
         	return f(*args, **kwargs)
         else:
         	flash("\"You shall not pass!\" - Gandalf")
@@ -90,28 +90,17 @@ def editCategory(id):
 	items = session.query(Items).filter_by(categories_id = id).all()
 	userID = session.query(Categories.userID).filter_by(id = id).one()
 	if request.method == 'POST':
-		if request.args.get('itemid'):
-			itemID = request.args.get('itemid')
-			ItemToEdit = session.query(Items).filter_by(id = itemID).one()
+		if request.args.get('catid'):
+			catID = request.args.get('catid')
+			CatToEdit = session.query(Categories).filter_by(id = catID).one()
 			if request.form['name'] != '':
 				name = request.form['name']
-				ItemToEdit.name=name
-				session.add(ItemToEdit)
-				session.commit()
-			
-			if request.form['description']!= '':
-				description = request.form['description']
-				ItemToEdit.description=description
-				session.add(ItemToEdit)
+				CatToEdit.name=name
+				session.add(CatToEdit)
 				session.commit()
 
 			return redirect(url_for('home'))
 		else: 
-			newItem = Items(name = request.form['name'], 
-				description = request.form['description'], 
-				categories_id= id)
-			session.add(newItem)
-			session.commit()
 			return redirect(url_for('home'))
 
 	if request.method =='GET':
